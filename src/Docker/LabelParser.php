@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Docker;
 
 use App\Scheduler\Job;
+use Cron\CronExpression;
 
 /**
  * Parses container labels into Job objects.
@@ -14,24 +15,6 @@ use App\Scheduler\Job;
  */
 class LabelParser
 {
-    /**
-     * Parse all jobs defined in a container's labels.
-     *
-     * How it works:
-     *  1. Loop over all labels looking for "acme.*.schedule"
-     *  2. Extract <n> from between "acme." and ".schedule"
-     *  3. Look up the matching "acme.<n>.command" label
-     *
-     * A single container can define multiple jobs:
-     *   acme.enabled           = "true"
-     *   acme.laravel.schedule  = "* * * * *"
-     *   acme.laravel.command   = "php artisan schedule:run"
-     *   acme.backup.schedule   = "0 2 * * *"
-     *   acme.backup.command    = "php artisan backup:run"
-     *
-     * @param string[] $labels
-     * @return Job[]
-     */
     public function parse(string $containerId, string $containerName, iterable $labels): array
     {
         $jobs = [];
@@ -51,14 +34,23 @@ class LabelParser
             $jobName = substr($withoutPrefix, 0, -strlen(Job::LABEL_SUFFIX_SCHEDULE));
 
             if (empty($jobName)) {
-                echo "Container {$containerName}: empty job name in label \"{$labelKey}\", skipping" . PHP_EOL;
+                echo "Container $containerName: empty job name in label \"$labelKey\", skipping" . PHP_EOL;
 
                 continue;
             }
 
             $schedule = trim($labelValue);
             if (empty($schedule)) {
-                echo "Container {$containerName}, job \"{$jobName}\": empty schedule, skipping" . PHP_EOL;
+                echo "Container $containerName, job \"$jobName\": empty schedule, skipping" . PHP_EOL;
+
+                continue;
+            }
+
+            // Validate the cron expression before accepting it
+            if (! $this->isValidSchedule($schedule)) {
+                echo "Container $containerName, job \"$jobName\": invalid schedule \"$schedule\"" . PHP_EOL;
+                echo '  Supported formats: "* * * * *", "@hourly", "@daily", "@weekly", "@monthly", "@yearly"' . PHP_EOL;
+                echo '  Note: "@every 1m" is not supported — use "* * * * *" instead' . PHP_EOL;
 
                 continue;
             }
@@ -68,7 +60,7 @@ class LabelParser
             $command = trim($labels[$commandKey] ?? '');
 
             if (empty($command)) {
-                echo "Container {$containerName}, job \"{$jobName}\": missing label \"{$commandKey}\", skipping" . PHP_EOL;
+                echo "Container $containerName, job \"$jobName\": missing label \"$commandKey\", skipping" . PHP_EOL;
 
                 continue;
             }
@@ -83,5 +75,15 @@ class LabelParser
         }
 
         return $jobs;
+    }
+
+    private function isValidSchedule(string $schedule): bool
+    {
+        try {
+            new CronExpression($schedule);
+            return true;
+        } catch (\InvalidArgumentException) {
+            return false;
+        }
     }
 }

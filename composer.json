@@ -13,7 +13,8 @@
 		"beluga-php/docker-php": "^1.45",
 		"symfony/http-client": "^8.0",
 		"vlucas/phpdotenv": "^5.6",
-		"sentry/sentry": "^4.25"
+		"sentry/sentry": "^4.25",
+		"dragonmantank/cron-expression": "^3.6"
 	},
 	"autoload": {
 		"psr-4": {
