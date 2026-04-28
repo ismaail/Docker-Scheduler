@@ -30,24 +30,41 @@ class CrontabWriter
             implode(PHP_EOL, $lines) . PHP_EOL,
         );
 
-        logger()->info('[crontab] Written ' . count($jobs) . " job(s) to {$this->crontabPath}");
+        logger()->info('[crontab] Written ' . count($jobs) . " job(s) to $this->crontabPath");
     }
 
     /**
-     * Add a job entry to the crontab.
+     * Add or update a job entry in the crontab.
      *
-     * Signature is used to detect the state:
-     *   - Signature found     → identical job, skip
-     *   - Signature not found → append as new entry
-     *
-     * If the job's labels changed (command, schedule, etc.), the container
-     * will have stopped and restarted — triggering remove() then add(),
-     * so update-in-place is not needed here.
+     * Uses signature (containerId + containerName + jobName + command) to detect state:
+     *   - Signature found + same cron entry   → identical, skip
+     *   - Signature found + different entry   → schedule changed, update in place
+     *   - Signature not found                 → new job, append
      */
     public function add(Job $job): void
     {
-        if ($this->has($job)) {
-            logger()->info("[crontab] Job {$job} unchanged, skipping");
+        $lines = $this->readLines();
+        $marker = $this->marker($job);
+        $cronEntry = $this->cronEntry($job);
+
+        foreach ($lines as $i => $iValue) {
+            if ($iValue !== $marker) {
+                continue;
+            }
+
+            if (($lines[$i + 1] ?? '') === $cronEntry) {
+                logger()->info("[crontab] Job $job unchanged, skipping");
+
+                return;
+            }
+
+            // Same identity, different schedule — update cron entry line in place
+            $lines[$i + 1] = $cronEntry;
+            file_put_contents(
+                $this->crontabPath,
+                implode(PHP_EOL, $lines) . PHP_EOL,
+            );
+            logger()->info("[crontab] Updated schedule for job $job");
 
             return;
         }
@@ -58,15 +75,12 @@ class CrontabWriter
             flags: FILE_APPEND,
         );
 
-        logger()->info("[crontab] Added job {$job}");
+        logger()->info("[crontab] Added job $job");
     }
 
     /**
      * Remove all crontab entries for a given containerID.
      * Used when a container stops or dies.
-     *
-     * Scans marker lines and peeks at the following cron entry line
-     * to check if it references this containerID.
      */
     public function remove(string $containerId): void
     {
@@ -78,13 +92,12 @@ class CrontabWriter
         while ($i < count($lines)) {
             $line = $lines[$i];
 
-            // Check if this is a marker line whose cron entry belongs to this container
             if (
                 str_starts_with($line, self::MARKER_PREFIX) &&
-                str_contains($lines[$i + 1] ?? '', "docker exec {$containerId} ")
+                str_contains($lines[$i + 1] ?? '', "docker exec $containerId ")
             ) {
                 $removed++;
-                $i += 2; // skip marker + cron entry
+                $i += 2;
 
                 continue;
             }
@@ -115,37 +128,22 @@ class CrontabWriter
         return in_array($this->marker($job), $this->readLines(), strict: true);
     }
 
-    /**
-     * Format a Job as two crontab lines:
-     *   # job:<signature>
-     *   <schedule> docker exec <id> <command>
-     */
     private function formatEntry(Job $job): string
     {
         return $this->marker($job) . PHP_EOL . $this->cronEntry($job);
     }
 
-    /**
-     * The marker comment line using the job's signature.
-     * e.g. `# job:a3f1c2d4e5b6...`
-     */
     private function marker(Job $job): string
     {
         return self::MARKER_PREFIX . $job->signature();
     }
 
-    /**
-     * The actual cron entry line.
-     * e.g. `* * * * * docker exec abc123 php artisan schedule:run`
-     */
     private function cronEntry(Job $job): string
     {
         return "$job->schedule docker exec $job->containerId $job->command";
     }
 
     /**
-     * Read the crontab file as an array of lines.
-     *
      * @return string[]
      */
     private function readLines(): array
