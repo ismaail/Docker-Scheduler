@@ -25,7 +25,8 @@
 	},
 	"require-dev": {
 		"laravel/pint": "^1.29",
-		"symfony/var-dumper": "^8.0"
+		"symfony/var-dumper": "^8.0",
+		"openswoole/ide-helper": "^4.11"
 	},
 	"config": {
 		"allow-plugins": {
