@@ -33,62 +33,29 @@ class CrontabWriter
         echo '[crontab] Written ' . count($jobs) . " job(s) to {$this->crontabPath}" . PHP_EOL;
     }
 
+    /**
+     * Add a job entry to the crontab.
+     *
+     * Signature is used to detect the state:
+     *   - Signature found     → identical job, skip
+     *   - Signature not found → append as new entry
+     *
+     * If the job's labels changed (command, schedule, etc.), the container
+     * will have stopped and restarted — triggering remove() then add(),
+     * so update-in-place is not needed here.
+     */
     public function add(Job $job): void
     {
-        $lines = $this->readLines();
-        $marker = $this->marker($job);
-        $cronEntry = $this->cronEntry($job);
-
-        // Signature already exists — job is 100% identical, skip
-        if (in_array($marker, $lines, true)) {
+        if ($this->has($job)) {
             echo "[crontab] Job {$job} unchanged, skipping" . PHP_EOL;
 
             return;
         }
 
-        // Look for an existing entry for this container+job by scanning
-        // cron entry lines that reference this containerID and jobName
-        $oldMarker = $this->findExistingMarker($lines, $job);
-
-        if (null !== $oldMarker) {
-            // Update in place — replace old marker and cron entry
-            $updated = [];
-            $skip = false;
-
-            foreach ($lines as $line) {
-                if ($line === $oldMarker) {
-                    // Replace old marker + cron entry with new ones
-                    $updated[] = $marker;
-                    $updated[] = $cronEntry;
-                    $skip = true; // skip the old cron entry on next iteration
-
-                    continue;
-                }
-
-                if ($skip) {
-                    $skip = false;
-
-                    continue;
-                }
-
-                $updated[] = $line;
-            }
-
-            file_put_contents(
-                $this->crontabPath,
-                implode(PHP_EOL, $updated) . PHP_EOL,
-            );
-
-            echo "[crontab] Updated job {$job}" . PHP_EOL;
-
-            return;
-        }
-
-        // No existing entry — append
         file_put_contents(
-            $this->crontabPath,
-            $this->formatEntry($job) . PHP_EOL,
-            FILE_APPEND,
+            filename: $this->crontabPath,
+            data: $this->formatEntry($job) . PHP_EOL,
+            flags: FILE_APPEND,
         );
 
         echo "[crontab] Added job {$job}" . PHP_EOL;
@@ -98,39 +65,32 @@ class CrontabWriter
      * Remove all crontab entries for a given containerID.
      * Used when a container stops or dies.
      *
-     * Scans cron entry lines (not markers) for the containerID,
-     * then removes both the marker and the cron entry.
+     * Scans marker lines and peeks at the following cron entry line
+     * to check if it references this containerID.
      */
     public function remove(string $containerId): void
     {
         $lines = $this->readLines();
         $filtered = [];
-        $skip = false;
         $removed = 0;
+        $i = 0;
 
-        foreach ($lines as $line) {
-            // Marker line — check if the next cron entry belongs to this container
-            if (str_starts_with($line, self::MARKER_PREFIX)) {
-                $skip = false; // reset
-                // Peek at next line to see if it references this containerID
-                $nextIndex = array_search($line, $lines) + 1;
-                $nextLine = $lines[$nextIndex] ?? '';
+        while ($i < count($lines)) {
+            $line = $lines[$i];
 
-                if (str_contains($nextLine, "docker exec {$containerId}")) {
-                    $skip = true; // skip this marker and the next cron entry
-                    $removed++;
-
-                    continue;
-                }
-            }
-
-            if ($skip) {
-                $skip = false;
+            // Check if this is a marker line whose cron entry belongs to this container
+            if (
+                str_starts_with($line, self::MARKER_PREFIX) &&
+                str_contains($lines[$i + 1] ?? '', "docker exec {$containerId} ")
+            ) {
+                $removed++;
+                $i += 2; // skip marker + cron entry
 
                 continue;
             }
 
             $filtered[] = $line;
+            $i++;
         }
 
         if (0 === $removed) {
@@ -144,7 +104,7 @@ class CrontabWriter
             implode(PHP_EOL, $filtered) . PHP_EOL,
         );
 
-        echo "[crontab] Removed {$removed} job(s) for container " . substr($containerId, 0, 12) . PHP_EOL;
+        echo "[crontab] Removed $removed job(s) for container " . substr($containerId, 0, 12) . PHP_EOL;
     }
 
     /**
@@ -152,7 +112,7 @@ class CrontabWriter
      */
     public function has(Job $job): bool
     {
-        return in_array($this->marker($job), $this->readLines(), true);
+        return in_array($this->marker($job), $this->readLines(), strict: true);
     }
 
     /**
@@ -167,7 +127,7 @@ class CrontabWriter
 
     /**
      * The marker comment line using the job's signature.
-     * e.g. "# job:a3f1c2d4e5b6..."
+     * e.g. `# job:a3f1c2d4e5b6...`
      */
     private function marker(Job $job): string
     {
@@ -176,41 +136,11 @@ class CrontabWriter
 
     /**
      * The actual cron entry line.
-     * e.g. "* * * * * docker exec abc123 php artisan schedule:run"
+     * e.g. `* * * * * docker exec abc123 php artisan schedule:run`
      */
     private function cronEntry(Job $job): string
     {
-        return "{$job->schedule} docker exec {$job->containerId} {$job->command}";
-    }
-
-    /**
-     * Find the marker line for an existing entry that matches this
-     * container+job combination (regardless of signature).
-     *
-     * Looks for cron entry lines containing "docker exec <containerId>"
-     * where the marker above contains a job signature — indicating the
-     * same job exists but with a different signature (i.e. it changed).
-     */
-    private function findExistingMarker(array $lines, Job $job): ?string
-    {
-        $cronEntry = "docker exec {$job->containerId} {$job->command}";
-
-        for ($i = 1, $iMax = count($lines); $i < $iMax; $i++) {
-            $line = $lines[$i];
-
-            // Match cron entry lines for this container with this job command
-            if (! str_contains($line, "docker exec {$job->containerId}")) {
-                continue;
-            }
-
-            // Check the marker above it is a job signature marker
-            $markerAbove = $lines[$i - 1] ?? '';
-            if (str_starts_with($markerAbove, self::MARKER_PREFIX)) {
-                return $markerAbove; // found the old marker
-            }
-        }
-
-        return null;
+        return "$job->schedule docker exec $job->containerId $job->command";
     }
 
     /**
