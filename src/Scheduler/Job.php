@@ -36,7 +36,6 @@ class Job
             $this->containerId,
             $this->containerName,
             $this->jobName,
-            $this->schedule,
             $this->command,
         ]));
     }
