@@ -81,6 +81,7 @@ class LabelParser
     {
         try {
             new CronExpression($schedule);
+
             return true;
         } catch (\InvalidArgumentException) {
             return false;
