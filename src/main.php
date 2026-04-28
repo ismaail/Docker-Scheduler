@@ -4,29 +4,29 @@ declare(strict_types=1);
 
 require __DIR__ . '/../bootstrap/app.php';
 
-use App\Docker\ContainerRepository;
-use App\Docker\LabelParser;
-use Docker\Docker;
+use App\Docker\Contracts\ContainerEventHandler;
+use App\Docker\EventListener;
+use Swoole\Process;
+use Swoole\Runtime;
 
-$docker = Docker::create();
-$repository = new ContainerRepository($docker, new LabelParser());
+Runtime::setHookFlags(0);
 
-$jobs = $repository->discoverJobs();
+$listener = new EventListener();
 
-if (empty($jobs)) {
-    echo PHP_EOL . 'No jobs found. To enable a container add these labels:' . PHP_EOL;
-    echo '  acme.enabled=true' . PHP_EOL;
-    echo '  acme.<n>.schedule=* * * * *' . PHP_EOL;
-    echo '  acme.<n>.command=php artisan schedule:run' . PHP_EOL;
+$listener->listen(new class implements ContainerEventHandler
+{
+    public function onContainerStart(string $containerId): void
+    {
+        echo "START $containerId\n";
+    }
 
+    public function onContainerStop(string $containerId): void
+    {
+        echo "STOP $containerId\n";
+    }
+});
+
+Process::signal(SIGINT, function () {
+    echo PHP_EOL . 'Stopping...' . PHP_EOL;
     exit(0);
-}
-
-foreach ($jobs as $job) {
-    echo PHP_EOL;
-    echo "  Container : {$job->containerName}" . PHP_EOL;
-    echo '  ID        : ' . substr($job->containerId, 0, 12) . PHP_EOL;
-    echo "  Job       : {$job->jobName}" . PHP_EOL;
-    echo "  Schedule  : {$job->schedule}" . PHP_EOL;
-    echo "  Command   : {$job->command}" . PHP_EOL;
-}
+});
