@@ -14,7 +14,14 @@
 		"symfony/http-client": "^8.0",
 		"vlucas/phpdotenv": "^5.6",
 		"sentry/sentry": "^4.25",
-		"dragonmantank/cron-expression": "^3.6"
+		"dragonmantank/cron-expression": "^3.6",
+		"monolog/monolog": "^3.10"
+	},
+	"require-dev": {
+		"laravel/pint": "^1.29",
+		"symfony/var-dumper": "^8.0",
+		"openswoole/ide-helper": "^4.11",
+		"pestphp/pest": "^4.6"
 	},
 	"autoload": {
 		"psr-4": {
@@ -24,11 +31,10 @@
 			"bootstrap/helpers.php"
 		]
 	},
-	"require-dev": {
-		"laravel/pint": "^1.29",
-		"symfony/var-dumper": "^8.0",
-		"openswoole/ide-helper": "^4.11",
-		"pestphp/pest": "^4.6"
+	"autoload-dev": {
+		"psr-4": {
+			"Tests\\": "tests/"
+		}
 	},
 	"config": {
 		"allow-plugins": {
