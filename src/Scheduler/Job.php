@@ -30,6 +30,17 @@ class Job
         public readonly string $command,
     ) {}
 
+    public function signature(): string
+    {
+        return hash('sha256', implode('|', [
+            $this->containerId,
+            $this->containerName,
+            $this->jobName,
+            $this->schedule,
+            $this->command,
+        ]));
+    }
+
     public function __toString(): string
     {
         return sprintf('[%s/%s]', $this->containerName, $this->jobName);
