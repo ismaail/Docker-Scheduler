@@ -34,23 +34,23 @@ class LabelParser
             $jobName = substr($withoutPrefix, 0, -strlen(Job::LABEL_SUFFIX_SCHEDULE));
 
             if (empty($jobName)) {
-                echo "Container $containerName: empty job name in label \"$labelKey\", skipping" . PHP_EOL;
+                logger()->info("Container $containerName: empty job name in label \"$labelKey\", skipping");
 
                 continue;
             }
 
             $schedule = trim($labelValue);
             if (empty($schedule)) {
-                echo "Container $containerName, job \"$jobName\": empty schedule, skipping" . PHP_EOL;
+                logger()->info("Container $containerName, job \"$jobName\": empty schedule, skipping");
 
                 continue;
             }
 
             // Validate the cron expression before accepting it
             if (! $this->isValidSchedule($schedule)) {
-                echo "Container $containerName, job \"$jobName\": invalid schedule \"$schedule\"" . PHP_EOL;
-                echo '  Supported formats: "* * * * *", "@hourly", "@daily", "@weekly", "@monthly", "@yearly"' . PHP_EOL;
-                echo '  Note: "@every 1m" is not supported — use "* * * * *" instead' . PHP_EOL;
+                logger()->info("Container $containerName, job \"$jobName\": invalid schedule \"$schedule\"");
+                logger()->info('  Supported formats: "* * * * *", "@hourly", "@daily", "@weekly", "@monthly", "@yearly"');
+                logger()->info('  Note: "@every 1m" is not supported — use "* * * * *" instead');
 
                 continue;
             }
@@ -60,7 +60,7 @@ class LabelParser
             $command = trim($labels[$commandKey] ?? '');
 
             if (empty($command)) {
-                echo "Container $containerName, job \"$jobName\": missing label \"$commandKey\", skipping" . PHP_EOL;
+                logger()->info("Container $containerName, job \"$jobName\": missing label \"$commandKey\", skipping");
 
                 continue;
             }

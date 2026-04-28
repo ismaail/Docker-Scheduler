@@ -30,7 +30,7 @@ class CrontabWriter
             implode(PHP_EOL, $lines) . PHP_EOL,
         );
 
-        echo '[crontab] Written ' . count($jobs) . " job(s) to {$this->crontabPath}" . PHP_EOL;
+        logger()->info('[crontab] Written ' . count($jobs) . " job(s) to {$this->crontabPath}");
     }
 
     /**
@@ -47,7 +47,7 @@ class CrontabWriter
     public function add(Job $job): void
     {
         if ($this->has($job)) {
-            echo "[crontab] Job {$job} unchanged, skipping" . PHP_EOL;
+            logger()->info("[crontab] Job {$job} unchanged, skipping");
 
             return;
         }
@@ -58,7 +58,7 @@ class CrontabWriter
             flags: FILE_APPEND,
         );
 
-        echo "[crontab] Added job {$job}" . PHP_EOL;
+        logger()->info("[crontab] Added job {$job}");
     }
 
     /**
@@ -94,7 +94,7 @@ class CrontabWriter
         }
 
         if (0 === $removed) {
-            echo '[crontab] No entries found for container ' . substr($containerId, 0, 12) . PHP_EOL;
+            logger()->info('[crontab] No entries found for container ' . substr($containerId, 0, 12));
 
             return;
         }
@@ -104,7 +104,7 @@ class CrontabWriter
             implode(PHP_EOL, $filtered) . PHP_EOL,
         );
 
-        echo "[crontab] Removed $removed job(s) for container " . substr($containerId, 0, 12) . PHP_EOL;
+        logger()->info("[crontab] Removed $removed job(s) for container " . substr($containerId, 0, 12));
     }
 
     /**

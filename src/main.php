@@ -80,7 +80,7 @@ if (! empty($jobs)) {
 $listener = new EventListener();
 
 Process::signal(SIGINT, function () {
-    echo PHP_EOL . 'Stopping...' . PHP_EOL;
+    logger()->info('Stopping...');
     exit(0);
 });
 

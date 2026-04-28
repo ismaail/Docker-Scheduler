@@ -43,7 +43,7 @@ class ContainerRepository
             $containerJobs = $this->labelParser->parse($containerId, $containerName, $labels);
 
             if (empty($containerJobs)) {
-                echo "Container $containerName: has " . Job::LABEL_ENABLED . '=true but no valid jobs found' . PHP_EOL;
+                logger()->info("Container $containerName: has " . Job::LABEL_ENABLED . '=true but no valid jobs found');
 
                 continue;
             }
@@ -51,7 +51,7 @@ class ContainerRepository
             array_push($jobs, ...$containerJobs);
         }
 
-        echo 'Found ' . count($jobs) . ' job(s) from running containers' . PHP_EOL;
+        logger()->info('Found ' . count($jobs) . ' job(s) from running containers');
 
         return $jobs;
     }

@@ -28,7 +28,7 @@ class EventListener
 
     public function listen(ContainerEventHandler $handler): void
     {
-        echo 'Listening for Docker container events...' . PHP_EOL;
+        logger()->info('Listening for Docker container events...');
 
         while ($this->running) {
             try {
@@ -39,14 +39,14 @@ class EventListener
                     break;
                 }
 
-                echo '[event-listener] Stream dropped: ' . $e->getMessage() . PHP_EOL;
-                echo '[event-listener] Reconnecting in 3 seconds...' . PHP_EOL;
+                logger()->info('[event-listener] Stream dropped: ' . $e->getMessage());
+                logger()->info('[event-listener] Reconnecting in 3 seconds...');
 
                 sleep(3);
             }
         }
 
-        echo '[event-listener] Stopped.' . PHP_EOL;
+        logger()->info('[event-listener] Stopped.');
     }
 
     public function stop(): void
@@ -82,13 +82,13 @@ class EventListener
 
     private function onStart(ContainerEventHandler $handler, string $containerId, string $name): void
     {
-        echo "[event] Container started: $name (" . substr($containerId, 0, 12) . ')' . PHP_EOL;
+        logger()->info("[event] Container started: $name (" . substr($containerId, 0, 12) . ')');
         $handler->onContainerStart($containerId);
     }
 
     private function onStop(ContainerEventHandler $handler, string $containerId, string $name): void
     {
-        echo "[event] Container stopped: $name (" . substr($containerId, 0, 12) . ')' . PHP_EOL;
+        logger()->info("[event] Container stopped: $name (" . substr($containerId, 0, 12) . ')');
         $handler->onContainerStop($containerId);
     }
 }
