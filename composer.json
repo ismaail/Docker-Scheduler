@@ -17,7 +17,7 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"Scheduler\\": "src/"
+			"App\\": "src/"
 		},
 		"files": [
 			"bootstrap/helpers.php"
