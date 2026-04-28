@@ -39,7 +39,8 @@ if (! function_exists('logger')) {
             $handler = new SocketHandler($socketUrl, $level);
             $handler->setFormatter(new JsonFormatter());
         } else {
-            $handler = new StreamHandler('php://stdout', $level);
+            $env = env('APP_ENV');
+            $handler = new StreamHandler('testing' !== $env ? 'php://stdout' : '/dev/null', $level);
             $handler->setFormatter(new LineFormatter(
                 format: "[%datetime%] %level_name%: %message% %context% %extra%\n",
                 dateFormat: 'Y-m-d H:i:s',
