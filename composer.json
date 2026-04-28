@@ -1,0 +1,35 @@
+{
+	"name": "ismaail/scheduler-php",
+	"description": "Docker container scheduler",
+	"version": "1.0.0",
+	"authors": [
+		{
+			"name": "ismaail",
+			"email": "contact@ismaail.com"
+		}
+	],
+	"require": {
+		"php": "^8.5",
+		"beluga-php/docker-php": "^1.45",
+		"symfony/http-client": "^8.0",
+		"vlucas/phpdotenv": "^5.6",
+		"sentry/sentry": "^4.25"
+	},
+	"autoload": {
+		"psr-4": {
+			"Scheduler\\": "src/"
+		},
+		"files": [
+			"bootstrap/helpers.php"
+		]
+	},
+	"require-dev": {
+		"laravel/pint": "^1.29",
+		"symfony/var-dumper": "^8.0"
+	},
+	"config": {
+		"allow-plugins": {
+			"php-http/discovery": true
+		}
+	}
+}
