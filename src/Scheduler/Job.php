@@ -8,15 +8,15 @@ namespace App\Scheduler;
  * Job holds the parsed scheduling info extracted from a container's labels.
  *
  * Expected label format on each container:
- *   acme.enabled       = "true"
- *   acme.<n>.schedule  = "@every 1m"
- *   acme.<n>.command   = "php artisan schedule:run"
+ *   sch.enabled       = "true"
+ *   sch.<n>.schedule  = "@every 1m"
+ *   sch.<n>.command   = "php artisan schedule:run"
  */
 class Job
 {
-    public const string LABEL_ENABLED = 'acme.enabled';
+    public const string LABEL_ENABLED = 'sch.enabled';
 
-    public const string LABEL_PREFIX = 'acme.';
+    public const string LABEL_PREFIX = 'sch.';
 
     public const string LABEL_SUFFIX_SCHEDULE = '.schedule';
 
@@ -25,7 +25,7 @@ class Job
     public function __construct(
         public readonly string $containerId,
         public readonly string $containerName,
-        public readonly string $jobName, // dynamic part, e.g. "laravel" in acme.laravel.*
+        public readonly string $jobName, // dynamic part, e.g. "laravel" in sch.laravel.*
         public readonly string $schedule,
         public readonly string $command,
     ) {}

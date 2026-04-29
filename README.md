@@ -11,9 +11,9 @@ A lightweight Docker container scheduler. It listens for Docker container lifecy
 │   ┌─────────────────────┐     ┌──────────────────────────┐  │
 │   │  ismaail/scheduler  │     │   Your App Container     │  │
 │   │                     │     │                          │  │
-│   │  PHP/Swoole         │     │  acme.enabled=true       │  │
-│   │  ├ EventListener    │───▶│  acme.laravel.schedule   │  │
-│   │  ├ LabelParser      │     │  acme.laravel.command    │  │
+│   │  PHP/Swoole         │     │  sch.enabled=true       │  │
+│   │  ├ EventListener    │───▶│  sch.laravel.schedule   │  │
+│   │  ├ LabelParser      │     │  sch.laravel.command    │  │
 │   │  ├ CrontabWriter    │     │                          │  │
 │   │  └ Supercronic ─────┼───▶│  docker exec <cmd>       │  │
 │   └─────────────────────┘     └──────────────────────────┘  │
@@ -46,9 +46,9 @@ services:
   my_app:
     image: my-laravel-app
     labels:
-      acme.enabled: "true"
-      acme.laravel.schedule: "* * * * *"
-      acme.laravel.command: "php artisan schedule:run"
+      sch.enabled: "true"
+      sch.laravel.schedule: "* * * * *"
+      sch.laravel.command: "php artisan schedule:run"
 ```
 
 ### 2. Add the scheduler container
@@ -70,9 +70,9 @@ That's it. The scheduler will detect `my_app` and run `php artisan schedule:run`
 
 | Label                  | Required | Description                           |
 |------------------------|----------|---------------------------------------|
-| `acme.enabled`         | ✅        | Must be `"true"` to enable scheduling |
-| `acme.<name>.schedule` | ✅        | Cron schedule expression              |
-| `acme.<name>.command`  | ✅        | Command to run inside the container   |
+| `sch.enabled`         | ✅        | Must be `"true"` to enable scheduling |
+| `sch.<name>.schedule` | ✅        | Cron schedule expression              |
+| `sch.<name>.command`  | ✅        | Command to run inside the container   |
 
 `<name>` is a unique identifier for the job — use any slug you like (`laravel`, `backup`, `cleanup`, etc.).
 
@@ -82,16 +82,16 @@ A single container can define multiple jobs by using different `<name>` values:
 
 ```yaml
 labels:
-  acme.enabled: "true"
+  sch.enabled: "true"
   #
-  acme.laravel.schedule: "@every 1m"
-  acme.laravel.command: "php artisan schedule:run"
+  sch.laravel.schedule: "@every 1m"
+  sch.laravel.command: "php artisan schedule:run"
   #
-  acme.backup.schedule: "0 2 * * *"
-  acme.backup.command: "php artisan backup:run"
+  sch.backup.schedule: "0 2 * * *"
+  sch.backup.command: "php artisan backup:run"
   #
-  acme.cleanup.schedule: "@daily"
-  acme.cleanup.command: "php artisan cache:clear"
+  sch.cleanup.schedule: "@daily"
+  sch.cleanup.command: "php artisan cache:clear"
 ```
 
 ---
@@ -152,19 +152,19 @@ services:
     image: my-laravel-app
     container_name: billing_app
     labels:
-      acme.enabled: "true"
-      acme.laravel.schedule: "* * * * *"
-      acme.laravel.command: "php artisan schedule:run"
-      acme.backup.schedule: "0 2 * * *"
-      acme.backup.command: "php artisan backup:run"
+      sch.enabled: "true"
+      sch.laravel.schedule: "* * * * *"
+      sch.laravel.command: "php artisan schedule:run"
+      sch.backup.schedule: "0 2 * * *"
+      sch.backup.command: "php artisan backup:run"
 
   notifications_app:
     image: my-laravel-app
     container_name: notifications_app
     labels:
-      acme.enabled: "true"
-      acme.laravel.schedule: "@every 5m"
-      acme.laravel.command: "php artisan schedule:run"
+      sch.enabled: "true"
+      sch.laravel.schedule: "@every 5m"
+      sch.laravel.command: "php artisan schedule:run"
 ```
 
 ---

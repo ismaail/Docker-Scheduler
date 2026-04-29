@@ -16,13 +16,13 @@ class ContainerRepository
 
     /**
      * Discover all jobs from currently running containers that have
-     * the "acme.enabled=true" label.
+     * the "sch.enabled=true" label.
      *
      * @return Job[]
      */
     public function discoverJobs(): array
     {
-        // Fetch only running containers with "acme.enabled=true"
+        // Fetch only running containers with "sch.enabled=true"
         // The label filter is handled manually since beluga-php SDK
         // returns all running containers — we filter by label ourselves
         $containers = $this->docker->containerList();
