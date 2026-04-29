@@ -11,9 +11,9 @@ A lightweight Docker container scheduler. It listens for Docker container lifecy
 │   ┌─────────────────────┐     ┌──────────────────────────┐  │
 │   │  ismaail/scheduler  │     │   Your App Container     │  │
 │   │                     │     │                          │  │
-│   │  PHP/Swoole         │     │  sch.enabled=true       │  │
-│   │  ├ EventListener    │───▶│  sch.laravel.schedule   │  │
-│   │  ├ LabelParser      │     │  sch.laravel.command    │  │
+│   │  PHP/Swoole         │     │  sch.enabled=true        │  │
+│   │  ├ EventListener    │───▶│  sch.laravel.schedule    │  │
+│   │  ├ LabelParser      │     │  sch.laravel.command     │  │
 │   │  ├ CrontabWriter    │     │                          │  │
 │   │  └ Supercronic ─────┼───▶│  docker exec <cmd>       │  │
 │   └─────────────────────┘     └──────────────────────────┘  │
