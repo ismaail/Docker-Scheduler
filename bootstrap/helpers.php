@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Monolog\Formatter\JsonFormatter;
 use Monolog\Formatter\LineFormatter;
+use Monolog\Handler\NullHandler;
 use Monolog\Handler\SocketHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -40,13 +41,18 @@ if (! function_exists('logger')) {
             $handler->setFormatter(new JsonFormatter());
         } else {
             $env = env('APP_ENV');
-            $handler = new StreamHandler('testing' !== $env ? 'php://stdout' : '/dev/null', $level);
-            $handler->setFormatter(new LineFormatter(
-                format: "[%datetime%] %level_name%: %message% %context% %extra%\n",
-                dateFormat: 'Y-m-d H:i:s',
-                allowInlineLineBreaks: true,
-                ignoreEmptyContextAndExtra: true,
-            ));
+            $handler = 'testing' === $env
+                ? new NullHandler()
+                : new StreamHandler('php://stdout', $level);
+
+            if ('testing' !== $env) {
+                $handler->setFormatter(new LineFormatter(
+                    format: "[%datetime%] %level_name%: %message% %context% %extra%\n",
+                    dateFormat: 'Y-m-d H:i:s',
+                    allowInlineLineBreaks: true,
+                    ignoreEmptyContextAndExtra: true,
+                ));
+            }
         }
 
         $logger->pushHandler($handler);
