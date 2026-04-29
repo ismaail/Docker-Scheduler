@@ -12,19 +12,7 @@ use Docker\Stream\EventStream;
 
 class EventListener
 {
-    private Docker $docker;
-
     private bool $running = true;
-
-    public function __construct()
-    {
-        $client = DockerClientFactory::create([
-            'remote_socket' => 'unix:///var/run/docker.sock',
-            'ssl' => false,
-        ]);
-
-        $this->docker = Docker::create($client);
-    }
 
     public function listen(ContainerEventHandler $handler): void
     {
@@ -56,8 +44,10 @@ class EventListener
 
     private function openStream(ContainerEventHandler $handler): void
     {
+        $docker = $this->createStreamingClient();
+
         /** @var EventStream $stream */
-        $stream = $this->docker->systemEvents([
+        $stream = $docker->systemEvents([
             'filters' => json_encode([
                 'type' => ['container'],
                 'event' => ['start', 'stop', 'die'],
@@ -78,6 +68,17 @@ class EventListener
         });
 
         $stream->wait();
+    }
+
+    private function createStreamingClient(): Docker
+    {
+        $client = DockerClientFactory::create([
+            'remote_socket' => 'unix:///var/run/docker.sock',
+            'ssl' => false,
+            'timeout' => PHP_INT_MAX,
+        ]);
+
+        return Docker::create($client);
     }
 
     private function onStart(ContainerEventHandler $handler, string $containerId, string $name): void
