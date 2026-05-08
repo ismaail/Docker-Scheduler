@@ -51,6 +51,7 @@ class EventListener
             'filters' => json_encode([
                 'type' => ['container'],
                 'event' => ['start', 'stop', 'die'],
+                'label' => ['sch.enabled=true'],
             ]),
         ]);
 
