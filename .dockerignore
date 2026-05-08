@@ -2,5 +2,5 @@
 .git/
 tests/
 *.md
-.env*
+.env
 docker-compose*.yml

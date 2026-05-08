@@ -47,6 +47,7 @@ COPY --from=builder /app/vendor /app/vendor
 ADD --chmod=0755 https://github.com/aptible/supercronic/releases/latest/download/supercronic-linux-amd64 /usr/local/bin/supercronic
 
 # Copy application source
+COPY .env.example/ /app/.env
 COPY bootstrap/ /app/bootstrap/
 COPY src/       /app/src/
 
