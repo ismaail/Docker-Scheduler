@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Docker;
 
 use App\Docker\Contracts\ContainerEventHandler;
+use App\Scheduler\Job;
 use Docker\API\Model\EventMessage;
 use Docker\Docker;
 use Docker\DockerClientFactory;
@@ -51,7 +52,7 @@ class EventListener
             'filters' => json_encode([
                 'type' => ['container'],
                 'event' => ['start', 'stop', 'die'],
-                'label' => ['sch.enabled=true'],
+                'label' => [Job::LABEL_ENABLED . '=true'],
             ]),
         ]);
 
