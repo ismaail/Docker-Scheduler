@@ -57,5 +57,7 @@ RUN touch /etc/crontab
 
 WORKDIR /app
 
+EXPOSE 8080
+
 # Run Supercronic (background) + PHP event listener (foreground)
 CMD ["sh", "-c", "supercronic -quiet -inotify /etc/crontab & php src/main.php"]
