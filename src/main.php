@@ -5,6 +5,7 @@ declare(strict_types=1);
 require __DIR__ . '/../bootstrap/app.php';
 
 use App\Crontab\CrontabWriter;
+use App\Dashboard;
 use App\Docker\ContainerRepository;
 use App\Docker\Contracts\ContainerEventHandler;
 use App\Docker\EventListener;
@@ -70,18 +71,15 @@ if (! empty($jobs)) {
 
 /*
 |--------------------------------------------------------------------------
-| Event Listerner
+| Event Listener + Dashboard
 |--------------------------------------------------------------------------
-|
-|
 |
 */
 
-$listener = new EventListener();
-
-Process::signal(SIGINT, function () {
-    logger()->info('Stopping...');
-    exit(0);
+// Run event listener in a separate process
+$process = new Process(function () use ($handler) {
+    new EventListener()->listen($handler);
 });
+$process->start();
 
-$listener->listen($handler);
+new Dashboard()->start();
