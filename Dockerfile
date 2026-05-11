@@ -34,7 +34,8 @@ FROM php:8.5-cli-alpine
 RUN apk add --no-cache \
    libstdc++ \
    libpq \
-   docker-cli
+   docker-cli \
+   entr
 
 # Copy PHP extensions + config from builder
 COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
