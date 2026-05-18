@@ -41,14 +41,13 @@ class Dashboard
     private function buildRows(array $jobs): string
     {
         if (empty($jobs)) {
-            return '<tr><td colspan="4" class="empty">No jobs registered yet.</td></tr>';
+            return '<tr><td colspan="3" class="empty">No jobs registered yet.</td></tr>';
         }
 
         return implode('', array_map(fn (array $job) => '<tr>'
-            . '<td>' . htmlspecialchars(substr($job['container'], 0, 12)) . '</td>'
+            . '<td>' . htmlspecialchars($job['container']) . '</td>'
             . '<td>' . htmlspecialchars($job['schedule']) . '</td>'
             . '<td><code>' . htmlspecialchars($job['command']) . '</code></td>'
-            . '<td><code>' . htmlspecialchars(substr($job['signature'], 0, 16)) . '...</code></td>'
             . '</tr>', $jobs));
     }
 
@@ -122,7 +121,7 @@ class Dashboard
                 <h1>Scheduler Dashboard <span class="badge">$count job(s)</span></h1>
                 <p class="meta">Auto-refreshes every 5s &nbsp;·&nbsp; Last updated: <span>$updated</span></p>
                 <table>
-                    <thead><tr><th>Container</th><th>Schedule</th><th>Command</th><th>Signature</th></tr></thead>
+                    <thead><tr><th>Container</th><th>Schedule</th><th>Command</th></tr></thead>
                     <tbody>$rows</tbody>
                 </table>
             </body>
