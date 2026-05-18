@@ -140,7 +140,7 @@ class CrontabWriter
 
     private function cronEntry(Job $job): string
     {
-        return "$job->schedule docker exec $job->containerId $job->command";
+        return "$job->schedule docker exec $job->containerName $job->command";
     }
 
     /**
